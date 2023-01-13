@@ -1,0 +1,6 @@
+MONTREAL_CANADIENS = "Montreal Canadiens"
+CHICAGO_BLACKHAWKS = "Chicago Blackhawks"
+DETROIT_RED_WINGS = "Detroit Red Wings"
+NEW_YORK_RANGERS = "New York Rangers"
+TORONTO_MAPLE_LEAFS = "Toronto Maple Leafs"
+BOSTON_BRUINS = "Boston Bruins"
