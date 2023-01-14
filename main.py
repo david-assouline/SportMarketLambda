@@ -1,5 +1,6 @@
 import admin_tools
 from buy_shares import *
 from constants.nhl_teams import *
+from deposit import deposit_money
 
-get_outstanding_shares_by_team_name(CHICAGO_BLACKHAWKS)
+buy_shares("1", MONTREAL_CANADIENS, "3")
