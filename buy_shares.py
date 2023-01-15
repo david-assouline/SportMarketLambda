@@ -1,7 +1,8 @@
 import logging
 from botocore.exceptions import ClientError
 
-from dynamodb import create_ddb_instance
+from resources.dynamodb import create_ddb_instance
+from toolkit import get_user_balance
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ users_table = client.Table('Users')
 nhl_table = client.Table('NHL')
 
 
-#Main
+# Main
 def buy_shares(user_id: str, team_name: str, quantity: str):
     current_shares = get_portfolio_shares_by_team_name(user_id, team_name)
     purchase_cost = calculate_purchase_cost(team_name, quantity)
@@ -29,7 +30,7 @@ def buy_shares(user_id: str, team_name: str, quantity: str):
             },
             ReturnValues="UPDATED_NEW"
         )
-        deduct_shares_from_outstanding(team_name, quantity)
+        deduct_shares_from_authorized(team_name, quantity)
         charge_user(user_id, purchase_cost)
 
         return f'Added {quantity} shares of {team_name} to portfolio of user #{user_id}' \
@@ -55,7 +56,7 @@ def get_portfolio_shares_by_team_name(user_id: str, team_name: str):
             return "0"
 
 
-def get_outstanding_shares_by_team_name(team_name: str) -> str:
+def get_authorized_shares_by_team_name(team_name: str) -> str:
     try:
         response = nhl_table.get_item(
             Key={'team_name': team_name},
@@ -64,29 +65,29 @@ def get_outstanding_shares_by_team_name(team_name: str) -> str:
         logger.error("error")
         raise
     else:
-        value = response["Item"]["outstanding_shares"]
-        print(f"There are {value} outstanding shares of {team_name}")
+        value = response["Item"]["authorized_shares"]
+        print(f"There are {value} authorized shares of {team_name}")
         return value
 
 
-def deduct_shares_from_outstanding(team_name: str, quantity: str):
-    current_outstanding = get_outstanding_shares_by_team_name(team_name)
-    if (int(current_outstanding) - int(quantity)) < 0:
-        raise ValueError("Not enough outstanding shares for this transaction")
+def deduct_shares_from_authorized(team_name: str, quantity: str):
+    current_authorized = get_authorized_shares_by_team_name(team_name)
+    if (int(current_authorized) - int(quantity)) < 0:
+        raise ValueError("Not enough authorized shares for this transaction")
     try:
         response = nhl_table.update_item(
             Key={'team_name': team_name},
-            UpdateExpression="SET #outstanding = :update_value",
+            UpdateExpression="SET #authorized = :update_value",
             ExpressionAttributeNames={
-                "#outstanding": "outstanding_shares"
+                "#authorized": "authorized_shares"
             },
             ExpressionAttributeValues={
-                ":update_value": str(int(current_outstanding) - int(quantity))
+                ":update_value": str(int(current_authorized) - int(quantity))
             },
             ReturnValues="UPDATED_NEW"
         )
         print(
-            f"Modified outstanding shares of {team_name} from {current_outstanding} to {str(int(current_outstanding) - int(quantity))}")
+            f"Modified authorized shares of {team_name} from {current_authorized} to {str(int(current_authorized) - int(quantity))}")
     except ClientError as err:
         logger.error("error")
         raise
@@ -117,7 +118,7 @@ def calculate_purchase_cost(team_name: str, amount_of_shares: str):
         raise
     share_price = response["Item"]["share_price"]
     purchase_cost = str(float(share_price) * float(amount_of_shares))
-    print(f"Purchase cost of {amount_of_shares} shares of {team_name} costs {purchase_cost}")
+    print(f"Purchase cost of {amount_of_shares} shares of {team_name} is {purchase_cost}")
     return purchase_cost
 
 
@@ -140,16 +141,3 @@ def charge_user(user_id: str, amount: str):
     except ClientError as err:
         logger.error("error")
         raise
-
-
-def get_user_balance(user_id: str):
-    try:
-        response = users_table.get_item(
-            Key={'user_id': user_id},
-        )
-    except ClientError as err:
-        logger.error("error")
-        raise
-    user_balance = response["Item"]["user_cash_balance"]
-    print(f"User {user_id} has balance {user_balance}")
-    return user_balance

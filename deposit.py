@@ -1,7 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
-from dynamodb import create_ddb_instance
+from resources.dynamodb import create_ddb_instance
 
 logger = logging.getLogger(__name__)
 
