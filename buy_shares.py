@@ -1,6 +1,8 @@
 import logging
 from botocore.exceptions import ClientError
 
+import price_management
+import toolkit
 from resources.dynamodb import create_ddb_instance
 from toolkit import get_user_balance
 
@@ -30,11 +32,12 @@ def buy_shares(user_id: str, team_name: str, quantity: str):
             },
             ReturnValues="UPDATED_NEW"
         )
-        deduct_shares_from_authorized(team_name, quantity)
+        add_shares_to_outstanding(team_name, quantity)
         charge_user(user_id, purchase_cost)
+        price_management.refresh_prices()
 
-        return f'Added {quantity} shares of {team_name} to portfolio of user #{user_id}' \
-               f'\nUser now has {int(quantity) + int(current_shares)} shares of {team_name}'
+        print(f'Added {quantity} shares of {team_name} to portfolio of user #{user_id}' \
+              f'\nUser now has {int(quantity) + int(current_shares)} shares of {team_name}')
     except ClientError as err:
         logger.error("error")
         raise
@@ -56,38 +59,22 @@ def get_portfolio_shares_by_team_name(user_id: str, team_name: str):
             return "0"
 
 
-def get_authorized_shares_by_team_name(team_name: str) -> str:
-    try:
-        response = nhl_table.get_item(
-            Key={'team_name': team_name},
-        )
-    except ClientError as err:
-        logger.error("error")
-        raise
-    else:
-        value = response["Item"]["authorized_shares"]
-        print(f"There are {value} authorized shares of {team_name}")
-        return value
-
-
-def deduct_shares_from_authorized(team_name: str, quantity: str):
-    current_authorized = get_authorized_shares_by_team_name(team_name)
-    if (int(current_authorized) - int(quantity)) < 0:
-        raise ValueError("Not enough authorized shares for this transaction")
+def add_shares_to_outstanding(team_name: str, quantity: str):
+    current_outstanding = toolkit.get_outstanding_shares_by_team_name(team_name)
     try:
         response = nhl_table.update_item(
             Key={'team_name': team_name},
-            UpdateExpression="SET #authorized = :update_value",
+            UpdateExpression="SET #outstanding = :update_value",
             ExpressionAttributeNames={
-                "#authorized": "authorized_shares"
+                "#outstanding": "outstanding_shares"
             },
             ExpressionAttributeValues={
-                ":update_value": str(int(current_authorized) - int(quantity))
+                ":update_value": str(int(current_outstanding) + int(quantity))
             },
             ReturnValues="UPDATED_NEW"
         )
         print(
-            f"Modified authorized shares of {team_name} from {current_authorized} to {str(int(current_authorized) - int(quantity))}")
+            f"Modified outstanding shares of {team_name} from {current_outstanding} to {str(int(current_outstanding) + int(quantity))}")
     except ClientError as err:
         logger.error("error")
         raise

@@ -24,6 +24,35 @@ def get_user_balance(user_id: str):
     return user_balance
 
 
+def get_sum_outstanding_shares() -> str:
+    try:
+        total_outstanding_shares = 0
+        for team in nhl_teams_list:
+            response = nhl_table.get_item(
+                Key={'team_name': team},
+            )
+            total_outstanding_shares += int(response["Item"]["outstanding_shares"])
+    except ClientError as err:
+        logger.error("error")
+        raise
+    # print(f"The sum of outstanding shares is {total_outstanding_shares}")
+    return str(total_outstanding_shares)
+
+
+def get_outstanding_shares_by_team_name(team_name: str) -> str:
+    try:
+        response = nhl_table.get_item(
+            Key={'team_name': team_name},
+        )
+    except ClientError as err:
+        logger.error("error")
+        raise
+    else:
+        value = response["Item"]["outstanding_shares"]
+        print(f"There are {value} outstanding shares of {team_name}")
+        return value
+
+
 def set_shares_by_team_name(user_id: str, team_name: str, value: str):
     try:
         response = users_table.update_item(
@@ -44,14 +73,14 @@ def set_shares_by_team_name(user_id: str, team_name: str, value: str):
         raise
 
 
-def set_authorized_shares_for_all(value: str):
+def set_outstanding_shares_for_all(value: str):
     for team in nhl_teams_list:
         try:
             response = nhl_table.update_item(
                 Key={'team_name': team},
-                UpdateExpression="SET #authorized = :update_value",
+                UpdateExpression="SET #outstanding = :update_value",
                 ExpressionAttributeNames={
-                    "#authorized": "authorized_shares"
+                    "#outstanding": "outstanding_shares"
                 },
                 ExpressionAttributeValues={
                     ":update_value": value
@@ -59,7 +88,7 @@ def set_authorized_shares_for_all(value: str):
                 ReturnValues="UPDATED_NEW"
             )
             print(
-                f"Set authorized shares for {team} to {value}")
+                f"Set outstanding shares for {team} to {value}")
         except ClientError as err:
             logger.error("error")
             raise

@@ -2,9 +2,9 @@ import boto3
 import os
 
 from dotenv import load_dotenv
+load_dotenv()
 
 AWS_DEFAULT_REGION = "us-east-2"
-load_dotenv()
 
 
 def create_ddb_instance():
