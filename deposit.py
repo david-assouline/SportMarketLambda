@@ -1,6 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
+from constants.db_constants import USER_CASH_BALANCE
 from resources.dynamodb import create_ddb_instance
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ def deposit_money(user_id: str, amount: str):
             Key={'user_id': user_id},
             UpdateExpression="SET #usercash = :update_value",
             ExpressionAttributeNames={
-                "#usercash": "user_cash_balance"
+                "#usercash": USER_CASH_BALANCE
             },
             ExpressionAttributeValues={
                 ":update_value": str(float(current_balance) + float(amount))
@@ -39,6 +40,6 @@ def get_user_current_balance(user_id: str):
         logger.error("error")
         raise
     else:
-        value = response["Item"]["user_cash_balance"]
+        value = response["Item"][USER_CASH_BALANCE]
         print(f"User {user_id} has balance {value}")
         return value

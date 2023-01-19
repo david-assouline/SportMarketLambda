@@ -1,6 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
+from constants.db_constants import USER_CASH_BALANCE
 from constants.nhl_team_names import nhl_teams_list
 from resources.dynamodb import create_ddb_instance
 
@@ -19,7 +20,7 @@ def get_user_balance(user_id: str):
     except ClientError as err:
         logger.error("error")
         raise
-    user_balance = response["Item"]["user_cash_balance"]
+    user_balance = response["Item"][USER_CASH_BALANCE]
     print(f"User {user_id} has balance {user_balance}")
     return user_balance
 
@@ -49,7 +50,6 @@ def get_outstanding_shares_by_team_name(team_name: str) -> str:
         raise
     else:
         value = response["Item"]["outstanding_shares"]
-        print(f"There are {value} outstanding shares of {team_name}")
         return value
 
 
@@ -100,7 +100,7 @@ def set_user_balance(user_id: str, value: str):
             Key={'user_id': user_id},
             UpdateExpression="SET #balance = :update_value",
             ExpressionAttributeNames={
-                "#balance": "user_cash_balance"
+                "#balance": USER_CASH_BALANCE
             },
             ExpressionAttributeValues={
                 ":update_value": value

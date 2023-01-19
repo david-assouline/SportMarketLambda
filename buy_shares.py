@@ -3,6 +3,7 @@ from botocore.exceptions import ClientError
 
 import price_management
 import toolkit
+from constants.db_constants import USER_CASH_BALANCE
 from resources.dynamodb import create_ddb_instance
 from toolkit import get_user_balance
 
@@ -18,7 +19,8 @@ def buy_shares(user_id: str, team_name: str, quantity: str):
     current_shares = get_portfolio_shares_by_team_name(user_id, team_name)
     purchase_cost = calculate_purchase_cost(team_name, quantity)
     if not user_has_sufficient_balance(user_id, purchase_cost):
-        return "Insufficient funds for this transaction"
+        print("Insufficient funds for this transaction")
+        return
     try:
         response = users_table.update_item(
             Key={'user_id': user_id},
@@ -73,8 +75,6 @@ def add_shares_to_outstanding(team_name: str, quantity: str):
             },
             ReturnValues="UPDATED_NEW"
         )
-        print(
-            f"Modified outstanding shares of {team_name} from {current_outstanding} to {str(int(current_outstanding) + int(quantity))}")
     except ClientError as err:
         logger.error("error")
         raise
@@ -88,7 +88,7 @@ def user_has_sufficient_balance(user_id: str, amount: str):
     except ClientError as err:
         logger.error("error")
         raise
-    value = response["Item"]["user_cash_balance"]
+    value = response["Item"][USER_CASH_BALANCE]
     if float(value) > float(amount):
         return True
     else:
@@ -116,10 +116,10 @@ def charge_user(user_id: str, amount: str):
             Key={'user_id': user_id},
             UpdateExpression="SET #balance = :update_value",
             ExpressionAttributeNames={
-                "#balance": "user_cash_balance"
+                "#balance": USER_CASH_BALANCE
             },
             ExpressionAttributeValues={
-                ":update_value": str(float(user_balance) - float(amount))
+                ":update_value": str(round(float(user_balance), 2) - round(float(amount), 2))
             },
             ReturnValues="UPDATED_NEW"
         )
