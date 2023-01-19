@@ -12,13 +12,16 @@ nhl_table = client.Table('NHL')
 
 
 def refresh_prices():
+    response = {}
     total_outstanding_shares = toolkit.get_sum_outstanding_shares()
     for team in nhl_teams_list:
         outstanding_shares = toolkit.get_outstanding_shares_by_team_name(team)
         decimal_value = float(outstanding_shares) / float(total_outstanding_shares)
         new_price = decimal_value * 100
         set_share_price(team, str(round(float(new_price), 2)))
+        response[team] = str(round(float(new_price), 2))
     print("Prices for all teams have been refreshed")
+    return response
 
 
 def set_share_price(team_name: str, value: str):
