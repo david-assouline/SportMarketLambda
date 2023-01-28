@@ -1,7 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
-from constants.db_constants import USER_CASH_BALANCE
+from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO
 from constants.nhl_team_names import nhl_teams_list
 from resources.dynamodb import create_ddb_instance
 
@@ -23,6 +23,18 @@ def get_user_balance(user_id: str):
     user_balance = response["Item"][USER_CASH_BALANCE]
     print(f"User {user_id} has balance {user_balance}")
     return user_balance
+
+
+def get_user_portfolio(user_id: str):
+    try:
+        response = users_table.get_item(
+            Key={'user_id': user_id},
+        )
+    except ClientError as err:
+        logger.error("error")
+        raise
+    user_portfolio = response["Item"][USER_PORTFOLIO]
+    return user_portfolio
 
 
 def get_sum_outstanding_shares() -> str:
