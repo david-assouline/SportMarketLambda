@@ -1,7 +1,7 @@
 import logging
 from botocore.exceptions import ClientError
 
-from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO
+from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO, SHARE_PRICE
 from constants.nhl_team_names import nhl_teams_list
 from resources.dynamodb import create_ddb_instance
 
@@ -63,6 +63,36 @@ def get_outstanding_shares_by_team_name(team_name: str) -> str:
     else:
         value = response["Item"]["outstanding_shares"]
         return value
+
+
+def get_share_price_by_team_name(team_name: str):
+    try:
+        response = nhl_table.get_item(
+            Key={'team_name': team_name},
+        )
+    except ClientError as err:
+        logger.error("error")
+        raise
+    share_price = response["Item"][SHARE_PRICE]
+    return share_price
+
+
+def get_all_user_ids():
+    response = users_table.scan(AttributesToGet=['user_id'])
+    data = response['Items']
+    all_user_ids = []
+    for i in data:
+        all_user_ids.append(i['user_id'])
+    return all_user_ids
+
+
+def get_total_value_of_user_portfolio(user_id: str):
+    total_value = 0
+    user_portfolio = get_user_portfolio(user_id)
+    for team_name in nhl_teams_list:
+        total_value += float(user_portfolio[team_name]) * float(get_share_price_by_team_name(team_name))
+    total_value = ('%.2f' % total_value)
+    return str(total_value)
 
 
 def set_shares_by_team_name(user_id: str, team_name: str, value: str):

@@ -1,0 +1,1 @@
+keep 2 decimals: ('%.2f' % total_value)
