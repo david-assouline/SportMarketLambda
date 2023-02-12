@@ -43,11 +43,12 @@ def lambda_handler(event, context):
 
     elif event['rawPath'] == "/register_user":
         new_user_id = event['queryStringParameters']['new_user_id']
+        new_user_email = event['queryStringParameters']['new_user_email']
 
         return {
             "statusCode": 200,
             "headers": {
                 "Access-Control-Allow-Origin": "*"
             },
-            "body": json.dumps(user_management.create_user(new_user_id))
+            "body": json.dumps(user_management.create_user(new_user_id, new_user_email))
         }
