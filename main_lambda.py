@@ -18,7 +18,7 @@ def lambda_handler(event, context):
             "headers": {
                 "Access-Control-Allow-Origin": "*"
             },
-            "body": f"User {user_id} has balance {toolkit.get_user_balance(user_id)}"
+            "body": json.dumps(toolkit.get_user_balance(user_id))
         }
 
     elif event['rawPath'] == "/get_prices":
