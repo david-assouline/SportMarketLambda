@@ -1,4 +1,7 @@
+import datetime
 import logging
+import dateutil.tz
+import dateutil
 from botocore.exceptions import ClientError
 
 from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO, SHARE_PRICE
@@ -10,6 +13,7 @@ logger = logging.getLogger(__name__)
 client = create_ddb_instance()
 users_table = client.Table('Users')
 nhl_table = client.Table('NHL')
+nhl_historical_prices_table = client.Table('nhl_historical_prices')
 
 
 def get_user_balance(user_id: str):
@@ -93,6 +97,20 @@ def get_total_value_of_user_portfolio(user_id: str):
         total_value += float(user_portfolio[team_name]) * float(get_share_price_by_team_name(team_name))
     total_value = ('%.2f' % total_value)
     return str(total_value)
+
+
+def get_previous_day_prices():
+    values = {}
+    eastern = dateutil.tz.gettz('US/Eastern')
+    yesterday = (datetime.datetime.now(tz=eastern) - datetime.timedelta(days=1)).strftime('%d-%m-%Y')
+
+    for team in nhl_teams_list:
+        response = nhl_historical_prices_table.get_item(
+            Key={'team_name': team},
+        )
+        share_price_yesterday = response["Item"][yesterday]
+        values[team] = share_price_yesterday
+    return values
 
 
 def set_shares_by_team_name(user_id: str, team_name: str, value: str):

@@ -59,8 +59,6 @@ def get_portfolio_shares_by_team_name(user_id: str, team_name: str):
             return portfolio[team_name]
         except KeyError as e:
             return "0"
-
-
 def add_shares_to_outstanding(team_name: str, quantity: str):
     current_outstanding = toolkit.get_outstanding_shares_by_team_name(team_name)
     try:
@@ -78,8 +76,6 @@ def add_shares_to_outstanding(team_name: str, quantity: str):
     except ClientError as err:
         logger.error("error")
         raise
-
-
 def user_has_sufficient_balance(user_id: str, amount: str):
     try:
         response = users_table.get_item(
@@ -93,8 +89,6 @@ def user_has_sufficient_balance(user_id: str, amount: str):
         return True
     else:
         return False
-
-
 def calculate_purchase_cost(team_name: str, amount_of_shares: str):
     try:
         response = nhl_table.get_item(
@@ -107,8 +101,6 @@ def calculate_purchase_cost(team_name: str, amount_of_shares: str):
     purchase_cost = str(float(share_price) * float(amount_of_shares))
     print(f"Purchase cost of {amount_of_shares} shares of {team_name} is {purchase_cost}")
     return purchase_cost
-
-
 def charge_user(user_id: str, amount: str):
     user_balance = get_user_balance(user_id)
     try:

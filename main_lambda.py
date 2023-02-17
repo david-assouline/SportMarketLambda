@@ -1,4 +1,4 @@
-import buy_shares
+import buy
 import constants
 import price_management
 import user_management
@@ -30,6 +30,15 @@ def lambda_handler(event, context):
             "body": json.dumps(price_management.refresh_prices())
         }
 
+    elif event['rawPath'] == "/get_previous_day_prices":
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*"
+            },
+            "body": json.dumps(toolkit.get_previous_day_prices())
+        }
+
     elif event['rawPath'] == "/get_user_portfolio":
         user_id = event['queryStringParameters']['user_id']
 
@@ -51,4 +60,17 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Origin": "*"
             },
             "body": json.dumps(user_management.create_user(new_user_id, new_user_email))
+        }
+
+    elif event['rawPath'] == "/buy":
+        user_id = event['queryStringParameters']['user_id']
+        team_name = event['queryStringParameters']['team_name']
+        quantity = event['queryStringParameters']['quantity']
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*"
+            },
+            "body": json.dumps(buy.buy_shares(user_id, team_name, quantity))
         }
