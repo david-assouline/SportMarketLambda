@@ -1,6 +1,7 @@
 import buy
 import constants
 import price_management
+import sell
 import user_management
 from deposit import deposit_money
 import toolkit
@@ -73,4 +74,17 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Origin": "*"
             },
             "body": json.dumps(buy.buy_shares(user_id, team_name, quantity))
+        }
+
+    elif event['rawPath'] == "/sell":
+        user_id = event['queryStringParameters']['user_id']
+        team_name = event['queryStringParameters']['team_name']
+        quantity = event['queryStringParameters']['quantity']
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*"
+            },
+            "body": json.dumps(sell.sell_shares(user_id, team_name, quantity))
         }

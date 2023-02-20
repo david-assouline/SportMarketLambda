@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 client = create_ddb_instance()
 users_table = client.Table('Users')
 nhl_table = client.Table('NHL')
-
-
-# Main
 def buy_shares(user_id: str, team_name: str, quantity: str):
     current_shares = get_portfolio_shares_by_team_name(user_id, team_name)
     purchase_cost = calculate_purchase_cost(team_name, quantity)
