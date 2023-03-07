@@ -48,6 +48,25 @@ def set_share_price(team_name: str, value: str):
         raise
 
 
+def set_share_price_for_all_teams(value: str):
+    for team in nhl_teams_list:
+        try:
+            response = nhl_table.update_item(
+                Key={'team_name': team},
+                UpdateExpression="SET #price = :update_value",
+                ExpressionAttributeNames={
+                    "#price": "share_price"
+                },
+                ExpressionAttributeValues={
+                    ":update_value": value
+                },
+                ReturnValues="UPDATED_NEW"
+            )
+        except ClientError as err:
+            logger.error("error")
+            raise
+
+
 def save_daily_closing_share_price():
     eastern = dateutil.tz.gettz('US/Eastern')
     today = datetime.datetime.now(tz=eastern).strftime('%d-%m-%Y')

@@ -1,5 +1,6 @@
 USER_ID = 'user_id'
 USER_EMAIL = 'user_email'
 USER_CASH_BALANCE = 'user_cash_balance'
+USER_NICKNAME = 'user_nickname'
 USER_PORTFOLIO = 'user_portfolio'
 SHARE_PRICE = 'share_price'

@@ -4,7 +4,7 @@ import dateutil.tz
 import dateutil
 from botocore.exceptions import ClientError
 
-from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO, SHARE_PRICE
+from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO, SHARE_PRICE, USER_NICKNAME
 from constants.nhl_team_names import nhl_teams_list
 from resources.dynamodb import create_ddb_instance
 
@@ -113,7 +113,28 @@ def get_previous_day_prices():
     return values
 
 
-def set_shares_by_team_name(user_id: str, team_name: str, value: str):
+def get_top_5_users():
+    all_user_ids = get_all_user_ids()
+    leaderboard_map = {}
+    for user_id in all_user_ids:
+
+        try:
+            response = users_table.get_item(
+                Key={'user_id': user_id},
+            )
+        except ClientError as err:
+            logger.error("error")
+            raise
+        user_nickname = response["Item"][USER_NICKNAME]
+        user_cash_balance = response["Item"][USER_CASH_BALANCE]
+        user_portfolio_value = get_total_value_of_user_portfolio(user_id)
+        total_assets = float(user_cash_balance) + float(user_portfolio_value)
+        leaderboard_map[user_nickname] = str(total_assets)
+
+    return leaderboard_map
+
+
+def set_users_shares_by_team_name(user_id: str, team_name: str, value: str):
     try:
         response = users_table.update_item(
             Key={'user_id': user_id},

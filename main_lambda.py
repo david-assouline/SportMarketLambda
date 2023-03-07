@@ -54,13 +54,14 @@ def lambda_handler(event, context):
     elif event['rawPath'] == "/register_user":
         new_user_id = event['queryStringParameters']['new_user_id']
         new_user_email = event['queryStringParameters']['new_user_email']
+        new_user_nickname = new_user_email.split("@")[0]
 
         return {
             "statusCode": 200,
             "headers": {
                 "Access-Control-Allow-Origin": "*"
             },
-            "body": json.dumps(user_management.create_user(new_user_id, new_user_email))
+            "body": json.dumps(user_management.create_user(new_user_id, new_user_email, new_user_nickname))
         }
 
     elif event['rawPath'] == "/buy":
@@ -87,4 +88,13 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Origin": "*"
             },
             "body": json.dumps(sell.sell_shares(user_id, team_name, quantity))
+        }
+
+    elif event['rawPath'] == "/leaderboard":
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*"
+            },
+            "body": json.dumps(toolkit.get_top_5_users())
         }
