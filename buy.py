@@ -1,3 +1,5 @@
+import datetime
+import dateutil.tz
 import logging
 from botocore.exceptions import ClientError
 
@@ -12,7 +14,12 @@ logger = logging.getLogger(__name__)
 client = create_ddb_instance()
 users_table = client.Table('Users')
 nhl_table = client.Table('NHL')
+
+
 def buy_shares(user_id: str, team_name: str, quantity: str):
+    eastern = dateutil.tz.gettz('US/Eastern')
+    date_today = datetime.datetime.now(tz=eastern).strftime('%d-%m-%Y %H:%M:%S')
+
     current_shares = get_portfolio_shares_by_team_name(user_id, team_name)
     purchase_cost = calculate_purchase_cost(team_name, quantity)
     if not user_has_sufficient_balance(user_id, purchase_cost):
@@ -31,6 +38,7 @@ def buy_shares(user_id: str, team_name: str, quantity: str):
             },
             ReturnValues="UPDATED_NEW"
         )
+        add_transaction_to_user_history(user_id, date_today, "buy", team_name, quantity, purchase_cost)
         add_shares_to_outstanding(team_name, quantity)
         charge_user(user_id, purchase_cost)
         price_management.refresh_prices()
@@ -56,6 +64,30 @@ def get_portfolio_shares_by_team_name(user_id: str, team_name: str):
             return portfolio[team_name]
         except KeyError as e:
             return "0"
+
+
+def add_transaction_to_user_history(user_id: str, date: str, type: str, team_name: str, quantity: str, total: str):
+    try:
+        response = users_table.update_item(
+            Key={'user_id': user_id},
+            UpdateExpression="SET #transaction_history.#date = :update_value",
+            ExpressionAttributeNames={
+                "#transaction_history": "transaction_history",
+                "#date": date
+            },
+            ExpressionAttributeValues={
+                ":update_value": {"transaction_type": type,
+                                  "team_name": team_name,
+                                  "transaction_quantity": quantity,
+                                  "transaction_total": total}
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+    except ClientError as err:
+        logger.error("error")
+        raise
+
+
 def add_shares_to_outstanding(team_name: str, quantity: str):
     current_outstanding = toolkit.get_outstanding_shares_by_team_name(team_name)
     try:
@@ -73,6 +105,8 @@ def add_shares_to_outstanding(team_name: str, quantity: str):
     except ClientError as err:
         logger.error("error")
         raise
+
+
 def user_has_sufficient_balance(user_id: str, amount: str):
     try:
         response = users_table.get_item(
@@ -86,6 +120,8 @@ def user_has_sufficient_balance(user_id: str, amount: str):
         return True
     else:
         return False
+
+
 def calculate_purchase_cost(team_name: str, amount_of_shares: str):
     try:
         response = nhl_table.get_item(
@@ -98,6 +134,8 @@ def calculate_purchase_cost(team_name: str, amount_of_shares: str):
     purchase_cost = str(float(share_price) * float(amount_of_shares))
     print(f"Purchase cost of {amount_of_shares} shares of {team_name} is {purchase_cost}")
     return purchase_cost
+
+
 def charge_user(user_id: str, amount: str):
     user_balance = get_user_balance(user_id)
     try:

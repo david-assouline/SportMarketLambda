@@ -4,7 +4,7 @@ import dateutil.tz
 import dateutil
 from botocore.exceptions import ClientError
 
-from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO, SHARE_PRICE, USER_NICKNAME
+from constants.db_constants import USER_CASH_BALANCE, USER_PORTFOLIO, SHARE_PRICE, USER_NICKNAME, TRANSACTION_HISTORY
 from constants.nhl_team_names import nhl_teams_list
 from resources.dynamodb import create_ddb_instance
 
@@ -31,14 +31,14 @@ def get_user_balance(user_id: str):
 
 def get_user_portfolio(user_id: str):
     try:
-        response = users_table.get_item(
+        ddb_response = users_table.get_item(
             Key={'user_id': user_id},
         )
     except ClientError as err:
         logger.error("error")
         raise
-    user_portfolio = response["Item"][USER_PORTFOLIO]
-    return user_portfolio
+    return {"user_portfolio": ddb_response["Item"][USER_PORTFOLIO],
+            "transaction_history": ddb_response["Item"][TRANSACTION_HISTORY]}
 
 
 def get_sum_outstanding_shares() -> str:
@@ -92,7 +92,7 @@ def get_all_user_ids():
 
 def get_total_value_of_user_portfolio(user_id: str):
     total_value = 0
-    user_portfolio = get_user_portfolio(user_id)
+    user_portfolio = get_user_portfolio(user_id)["user_portfolio"]
     for team_name in nhl_teams_list:
         total_value += float(user_portfolio[team_name]) * float(get_share_price_by_team_name(team_name))
     total_value = ('%.2f' % total_value)

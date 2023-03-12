@@ -1,3 +1,4 @@
+TRANSACTION_HISTORY = 'transaction_history'
 USER_ID = 'user_id'
 USER_EMAIL = 'user_email'
 USER_CASH_BALANCE = 'user_cash_balance'
