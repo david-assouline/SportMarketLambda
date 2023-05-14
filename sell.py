@@ -1,3 +1,6 @@
+import datetime
+import dateutil.tz
+
 import logging
 from botocore.exceptions import ClientError
 
@@ -6,6 +9,7 @@ import toolkit
 from constants.db_constants import USER_CASH_BALANCE
 from resources.dynamodb import create_ddb_instance
 from toolkit import get_user_balance
+from user_management import add_transaction_to_user_history
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +19,9 @@ nhl_table = client.Table('NHL')
 
 
 def sell_shares(user_id: str, team_name: str, quantity: str):
+    eastern = dateutil.tz.gettz('US/Eastern')
+    time_now = datetime.datetime.now(tz=eastern).strftime('%d-%m-%Y %H:%M:%S')
+
     current_shares = get_portfolio_shares_by_team_name(user_id, team_name)
     sale_proceeds = calculate_sale_proceeds(team_name, quantity)
 
@@ -34,6 +41,7 @@ def sell_shares(user_id: str, team_name: str, quantity: str):
                 },
                 ReturnValues="UPDATED_NEW"
             )
+            add_transaction_to_user_history(user_id, time_now, "sell", team_name, quantity, sale_proceeds)
             remove_shares_from_outstanding(team_name, quantity)
             credit_user(user_id, sale_proceeds)
             price_management.refresh_prices()

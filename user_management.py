@@ -13,7 +13,6 @@ users_table = client.Table('Users')
 
 
 def create_user(user_id: str, user_email: str, user_nickname: str):
-
     item = {USER_ID: user_id,
             USER_EMAIL: user_email,
             USER_NICKNAME: user_nickname,
@@ -29,6 +28,28 @@ def create_user(user_id: str, user_email: str, user_nickname: str):
     try:
         users_table.put_item(Item=item)
         print(f"Created user with ID {user_id} and cash balance 10000")
+    except ClientError as err:
+        logger.error("error")
+        raise
+
+
+def add_transaction_to_user_history(user_id: str, date: str, type: str, team_name: str, quantity: str, total: str):
+    try:
+        response = users_table.update_item(
+            Key={'user_id': user_id},
+            UpdateExpression="SET #transaction_history.#date = :update_value",
+            ExpressionAttributeNames={
+                "#transaction_history": "transaction_history",
+                "#date": date
+            },
+            ExpressionAttributeValues={
+                ":update_value": {"transaction_type": type,
+                                  "team_name": team_name,
+                                  "transaction_quantity": quantity,
+                                  "transaction_total": total}
+            },
+            ReturnValues="UPDATED_NEW"
+        )
     except ClientError as err:
         logger.error("error")
         raise

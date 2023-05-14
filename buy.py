@@ -8,6 +8,7 @@ import toolkit
 from constants.db_constants import USER_CASH_BALANCE
 from resources.dynamodb import create_ddb_instance
 from toolkit import get_user_balance
+from user_management import add_transaction_to_user_history
 
 logger = logging.getLogger(__name__)
 
@@ -64,28 +65,6 @@ def get_portfolio_shares_by_team_name(user_id: str, team_name: str):
             return portfolio[team_name]
         except KeyError as e:
             return "0"
-
-
-def add_transaction_to_user_history(user_id: str, date: str, type: str, team_name: str, quantity: str, total: str):
-    try:
-        response = users_table.update_item(
-            Key={'user_id': user_id},
-            UpdateExpression="SET #transaction_history.#date = :update_value",
-            ExpressionAttributeNames={
-                "#transaction_history": "transaction_history",
-                "#date": date
-            },
-            ExpressionAttributeValues={
-                ":update_value": {"transaction_type": type,
-                                  "team_name": team_name,
-                                  "transaction_quantity": quantity,
-                                  "transaction_total": total}
-            },
-            ReturnValues="UPDATED_NEW"
-        )
-    except ClientError as err:
-        logger.error("error")
-        raise
 
 
 def add_shares_to_outstanding(team_name: str, quantity: str):

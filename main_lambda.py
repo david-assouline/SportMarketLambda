@@ -98,4 +98,3 @@ def lambda_handler(event, context):
             },
             "body": json.dumps(toolkit.get_top_5_users())
         }
-
