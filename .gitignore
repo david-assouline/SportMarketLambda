@@ -1,2 +1,3 @@
 /.env
-/other/scrap.py
+/testing/scrap.py
+.ENV
